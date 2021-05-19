@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Probador</title>
+    <script>
+      var API_URL = "/api/classify/";
+
+      window.onload = function () {
+        // Inicializar canvas
+        var canvas = document.getElementById("canvas");
+        var context = canvas.getContext("2d");
+        var boundings = canvas.getBoundingClientRect();
+        var mouseX = 0;
+        var mouseY = 0;
+        canvas.width = 28 * 10;
+        canvas.height = 28 * 10;
+        context.strokeStyle = "white";
+        context.lineWidth = 10;
+        context.fillStyle = "black";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        var isDrawing = false;
+
+        // Pitnar en el canvas.
+        function setMouseCoordinates(event) {
+          mouseX = event.clientX - boundings.left;
+          mouseY = event.clientY - boundings.top;
+        }
+        canvas.addEventListener("mousedown", function (event) {
+          setMouseCoordinates(event);
+          isDrawing = true;
+          context.beginPath();
+          context.moveTo(mouseX, mouseY);
+        });
+        canvas.addEventListener("mousemove", function (event) {
+          setMouseCoordinates(event);
+          if (isDrawing) {
+            context.lineTo(mouseX, mouseY);
+            context.stroke();
+          }
+        });
+        canvas.addEventListener("mouseup", function (event) {
+          setMouseCoordinates(event);
+          isDrawing = false;
+        });
+
+        // Limpiar canvas
+        $("#limpiar").click(function () {
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          context.fillStyle = "black";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          $("#prediccion").text("No enviado");
+        });
+
+        // Predecir.
+        $("#predecir").click(function () {
+          var dataURL = canvas.toDataURL();
+          console.log(dataURL);
+          $.ajax({
+            type: "POST",
+            url: API_URL,
+            data: {
+              image: dataURL,
+            },
+          }).done(function (response) {
+            $("#prediccion").text("Resultado: " + response.prediction);
+          });
+        });
+      };
+    </script>
+    <style>
+      .main {
+        width: 100%;
+        height: 100%;
+        text-align: center;
+      }
+      .title {
+        width: 100%;
+        font-size: 30px;
+        text-align: center;
+      }
+      .prediccion {
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <script
+      src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"
+      type="text/javascript"
+    ></script>
+    <div class="main">
+      <div class="title">Prueba MNIST!</div>
+      <div class="blackboard-container">
+        <canvas id="canvas"></canvas>
+      </div>
+      <div class="prediction-container">
+        <div id="prediccion" class="prediccion">No enviado</div>
+      </div>
+      <div class="button-container">
+        <input type="button" id="limpiar" value="Limpiar" />
+        <input type="button" id="predecir" value="Enviar" />
+      </div>
+    </div>
+  </body>
+</html>
